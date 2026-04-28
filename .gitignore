@@ -12,3 +12,6 @@ CS2M/Library
 *.sln.DotSettings.user
 *csproj.user
 *.drawio.bkp
+
+# ag2_go is an independent repository
+ag2_go/
