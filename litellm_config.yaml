@@ -1,0 +1,13 @@
+model_list:
+  - model_name: deepseek-v4-flash
+    litellm_params:
+      model: openai/deepseek-v4-flash
+      api_base: https://opencode.ai/zen/go/v1
+      api_key: sk-sYJm9aHB5W8X1dXteZYd0vS2lksaks6jPX1xLKawg4tUKnrPHuV0ioarHUMDOpDa
+    model_info:
+      supports_reasoning: true
+
+litellm_settings:
+  modify_params: true
+  drop_params: true
+  reasoning_auto_summary: true
