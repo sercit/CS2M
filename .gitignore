@@ -6,12 +6,23 @@ riderModule.iml
 **/node_modules/
 .envrc
 .vs/
+.idea/
 assemblies/*.dll
+
+# UI build output (webpack writes compiled CS2M.mjs/css + mod.json)
+/dist/
+
+# MSBuild ILRepack build logs
+MSBuild_*.log
 
 CS2M/Library
 *.sln.DotSettings.user
 *csproj.user
 *.drawio.bkp
+
+# Stale per-build logs that shouldn't be checked in
+CS2M.UI/build_log*.txt
+CS2M.UI/build_error.txt
 
 # ag2_go is an independent repository
 ag2_go/

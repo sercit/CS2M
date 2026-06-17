@@ -14,18 +14,17 @@ If (!(Test-Path $TargetDir)) {
 # Wipe stale deploy (PDB, IDB, cached files from prior broken builds)
 Get-ChildItem -LiteralPath $TargetDir -File -ErrorAction SilentlyContinue | Remove-Item -Force
 
-# Copy only the three CS2M assemblies. ILRepack merges the satellite DLLs
-# (LiteNetLib, MessagePack, 0Harmony, System.*) into CS2M.dll, so they are
-# not needed at runtime. Shipping them in the mod folder makes the game's
-# mod manager treat each one as a separate "mod" entry, which produces
-# spurious warnings ("in-game assembly ... should NOT be shipped with mod")
-# and a dynamic-assembly NotSupportedException during GetModAssets that
-# can leave ModInfo.assembly null, preventing OnLoad from being invoked.
-$cs2mDlls = @('CS2M.dll', 'CS2M.API.dll', 'CS2M.BaseGame.dll')
-foreach ($name in $cs2mDlls) {
-    Copy-Item (Join-Path $BuildDir $name) -Destination $TargetDir -Force
-}
-Write-Host "Copied 3 CS2M assemblies"
+# Ship ONLY the ILRepack-merged CS2M.dll. CS2M.API.dll and CS2M.BaseGame.dll
+# are also inputs to ILRepack (see CS2M.csproj <PackAssemblies>) and their
+# types end up inside CS2M.dll. The game's mod manager scans every DLL in
+# the mod folder; if it finds CS2M.API.dll / CS2M.BaseGame.dll on their own
+# (no IMod implementation), it creates a ModInfo with a null assembly and
+# later throws NullReferenceException at ModInfo.get_assemblyFullName,
+# which aborts InitializeMods and leaves the UI bindings unregistered.
+# The same hazard applies to the satellite DLLs (LiteNetLib, MessagePack,
+# 0Harmony, System.*) which is why those are not in this folder either.
+Copy-Item (Join-Path $BuildDir 'CS2M.dll') -Destination $TargetDir -Force
+Write-Host "Copied CS2M.dll"
 
 # Copy UI
 if (Test-Path $DistDir) {

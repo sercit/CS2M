@@ -151,6 +151,21 @@
         <ILRepack Parallel="true" Internalize="true" InputAssemblies="@(InputAssemblies)" LibraryPath="$(Cities2ManagedDir);$(AssemblySearchPaths)" TargetKind="Dll" OutputFile="$(OutputPath)\$(AssemblyName).dll"/>
     </Target>
 
+    <!-- After ILRepack, delete the now-merged assembly copies and their PDBs
+         from the build output. The deploy script only ships CS2M.dll, so
+         leaving these around is a footgun: anyone who changes the deploy
+         script and copies the whole OutputPath will re-introduce the
+         "orphan DLL treated as mod" NRE that previously broke the mod. -->
+    <Target Name="RemoveMergedAssemblies" AfterTargets="ILRepacker">
+        <ItemGroup>
+            <MergedInputs Include="$(OutputPath)\CS2M.API.dll"/>
+            <MergedInputs Include="$(OutputPath)\CS2M.API.pdb"/>
+            <MergedInputs Include="$(OutputPath)\CS2M.BaseGame.dll"/>
+            <MergedInputs Include="$(OutputPath)\CS2M.BaseGame.pdb"/>
+        </ItemGroup>
+        <Delete Files="@(MergedInputs)" ContinueOnError="true"/>
+    </Target>
+
     <Target Name="DeployWIP" AfterTargets="ILRepacker" Condition="'$(NeedBuild)' == 'true'">
         <ItemGroup>
             <FilesToDeploy Include="$(OutDir)\**\*.*" Exclude="@(PackAssemblies)"/>
