@@ -56,31 +56,24 @@ namespace CS2M
             Settings.OnSetLoggingLevel(Settings.LoggingLevel);
             Log.Info("Configured and initialised mod settings");
 
-            CommandInternal.Instance = new CommandInternal();
-            ApiCommand.Instance = new ApiCommand();
-
-            NetDebug.Logger = new NetLogWrapper();
-
-            ModSupport.Instance.Init();
-
-            // Patch methods
-            var harmony = new Harmony(HarmonyPatchID);
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-            // Set up systems
+            // Register the UI system so the CS2M button appears on the main menu and
+            // the multiplayer screens (join / host / hub) can be opened. The actual
+            // mod support / networking / harmony patches are intentionally skipped in
+            // this load path: registering ECS systems on SystemUpdatePhase.GameSimulation
+            // plus PatchAll(Assembly.GetExecutingAssembly()) was triggering a Unity
+            // ECS hang (error.typeHang) ~30s after the game entered the main menu, even
+            // though every system OnUpdate returns early without an active session.
+            // Until the cooperative multiplayer server exists there is nothing for the
+            // BaseGame sync systems to do anyway; the UI is the only thing that
+            // currently has a usable surface.
             updateSystem.UpdateAt<UISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<CS2M.Systems.CooperativeSyncSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CS2M.BaseGame.Systems.TimeSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CS2M.BaseGame.Systems.MoneySyncSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CS2M.BaseGame.Systems.FrameSyncSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CS2M.BaseGame.Systems.XPMilestoneSyncSystem>(SystemUpdatePhase.GameSimulation);
 
             Log.Info("Loading complete");
         }
 
         public void OnDispose()
         {
-            new Harmony(HarmonyPatchID).UnpatchAll(HarmonyPatchID);
+            //new Harmony(HarmonyPatchID).UnpatchAll(HarmonyPatchID);
 
             ModSupport.Instance.DestroyConnections();
 

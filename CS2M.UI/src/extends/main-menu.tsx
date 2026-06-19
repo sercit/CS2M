@@ -2,14 +2,10 @@ import {ModuleRegistryExtend} from "cs2/modding";
 import React from "react";
 import {useValue} from "cs2/api";
 import {actions, state} from "../state";
-import {MultiplayerHub} from "../screens/multiplayer-hub";
-import {JoinGameMenu} from "../screens/join-game-menu";
-import {HostGameMenu} from "../screens/host-game-menu";
 import {FloatingButton, Tooltip} from "cs2/ui";
 import {FocusBoundary} from "cs2/input";
 import {useTranslate} from "../utils/localization";
-
-const MP_ICON = "Media/Game/Icons/Communications.svg";
+import {MP_ICON} from "../icons";
 
 export const MenuUIExtensions: ModuleRegistryExtend = (Component) => {
     return (props) => {
@@ -47,9 +43,6 @@ export const MenuUIExtensions: ModuleRegistryExtend = (Component) => {
             <Component {...otherProps}>
                 {children}
                 {!anyMenuVisible && launcher}
-                <MultiplayerHub />
-                <JoinGameMenu />
-                <HostGameMenu />
             </Component>
         );
     };

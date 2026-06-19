@@ -5,6 +5,7 @@ import {useLocalization} from "cs2/l10n";
 import {setVal} from "api";
 import styles from "./chat.module.scss";
 import mod from "../../mod.json";
+import {MP_ICON} from "../icons";
 
 interface Message {
     timestamp: string;
@@ -90,7 +91,7 @@ export const ChatIcon = () => {
 
     return (
         <div className={RightMenuStyle.item}>
-            <IconButton src='Media/Game/Icons/Communications.svg'
+            <IconButton src={MP_ICON}
                         selected={ChatPanelState.visible}
                         onSelect={ChatPanelState.toggle}
                         theme={RightMenuButtonStyle}

@@ -126,14 +126,18 @@
 }
 
 .cs2m-roster-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto auto;
+    display: flex;
     align-items: center;
     gap: 10rem;
     padding: 6rem 8rem;
     background: rgba(255, 255, 255, 0.04);
     border-radius: 4rem;
     border: 1px solid transparent;
+
+    & > .cs2m-roster-name {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
 
     &:hover {
         background: rgba(255, 255, 255, 0.08);
