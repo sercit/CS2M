@@ -12,6 +12,24 @@
     gap: 12rem;
     padding: 16rem 20rem;
     min-width: 420rem;
+    max-width: 520rem;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.cs2m-form-body > .cs2m-section {
+    flex-shrink: 0;
+}
+
+.cs2m-form-footer {
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(to top, var(--menuPanelBg, #2a3340) 70%, transparent);
+    padding-top: 8rem;
+    margin-top: 4rem;
+    margin-bottom: -8rem;
 }
 
 .cs2m-field {
@@ -72,6 +90,7 @@
     gap: 16rem;
     padding: 16rem 20rem 20rem;
     min-width: 360rem;
+    max-width: 480rem;
 }
 
 .cs2m-hub-status {

@@ -13,7 +13,6 @@ const register: ModRegistrar = (moduleRegistry) => {
     // that extend target and only use moduleRegistry.append(...) — we do
     // the same.
     moduleRegistry.append("GameTopLeft", MainMenuButton);
-    moduleRegistry.append("GameTopRight", MainMenuButton);
     moduleRegistry.append("GameBottomRight", ChatIcon);
     moduleRegistry.append("GameBottomRight", CooperativeOverlay);
 
