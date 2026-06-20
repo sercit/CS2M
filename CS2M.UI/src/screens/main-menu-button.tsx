@@ -1,7 +1,7 @@
 import {useValue, trigger} from "cs2/api";
 import {getModule} from "cs2/modding";
 import React from "react";
-import {FloatingButton, Tooltip} from "cs2/ui";
+import {Tooltip} from "cs2/ui";
 import {FocusBoundary} from "cs2/input";
 import {actions, state} from "../state";
 import {useTranslate} from "../utils/localization";
@@ -31,19 +31,20 @@ export const MainMenuButton = () => {
         <>
             {!anyMenuVisible && (
                 <FocusBoundary>
-                    <div
-                        className={styles.launcher}>
-                        <Tooltip
-                            tooltip={t("CS2M.UI.Multiplayer", "Multiplayer")}
-                            direction="up"
-                            alignment="center">
-                            <FloatingButton
-                                src={MP_ICON}
-                                focusKey="CS2M-MainMenu-Launcher"
-                                onSelect={actions.showMultiplayerMenu}
-                            />
-                        </Tooltip>
-                    </div>
+                    <Tooltip
+                        tooltip={t("CS2M.UI.Multiplayer", "Multiplayer")}
+                        direction="down"
+                        alignment="start">
+                        <button
+                            type="button"
+                            className={styles.launcher}
+                            onClick={() => trigger("CS2M", "ShowMultiplayerMenu")}>
+                            <span className={styles["launcher-icon"]}>M</span>
+                            <span className={styles["launcher-label"]}>
+                                {t("CS2M.UI.Multiplayer", "Multiplayer")}
+                            </span>
+                        </button>
+                    </Tooltip>
                 </FocusBoundary>
             )}
             <MultiplayerHub/>

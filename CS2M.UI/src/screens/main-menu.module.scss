@@ -1,6 +1,42 @@
 .cs2m-launcher {
-    position: fixed;
-    right: 44rem;
-    bottom: 44rem;
-    z-index: 1000;
+    display: inline-flex;
+    margin: 2rem;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 1rem 1.6rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #2a6fbf 0%, #1d4f8a 100%);
+    color: #fff;
+    font-family: var(--cs2m-font, "OpenSans-Semibold", sans-serif);
+    font-size: 1.6rem;
+    letter-spacing: 0.05rem;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.cs2m-launcher:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.cs2m-launcher:active {
+    transform: translateY(0);
+}
+
+.cs2m-launcher-icon {
+    width: 3.2rem;
+    height: 3.2rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: #fff;
+}
+
+.cs2m-launcher-label {
+    text-transform: uppercase;
+    font-weight: 600;
 }
