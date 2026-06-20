@@ -144,7 +144,16 @@ export const CooperativeOverlay = () => {
     let data: CooperativeData = {cursors: [], pings: [], players: []};
     try {
         if (raw) {
-            data = JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            // Defensive: the C# side may write any partial snapshot, so
+            // normalise every field. A single missing array crashes cohtml
+            // and takes the whole HUD with it (observed on first frame after
+            // entering a save, where CooperativeData = "{}").
+            data = {
+                cursors: Array.isArray(parsed?.cursors) ? parsed.cursors : [],
+                pings: Array.isArray(parsed?.pings) ? parsed.pings : [],
+                players: Array.isArray(parsed?.players) ? parsed.players : [],
+            };
         }
     } catch {
         // Ignore corrupt snapshot, render empty.
