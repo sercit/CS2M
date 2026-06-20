@@ -252,6 +252,24 @@ namespace CS2M.UI
             _gameMode = mode;
         }
 
+        /// <summary>
+        ///     Pumps the LiteNetLib event loop while the local player is in a
+        ///     session. Without this, NetworkManager.Receive / Connect callbacks
+        ///     never fire and Host / Join silently no-op.
+        /// </summary>
+        protected override void OnUpdate()
+        {
+            base.OnUpdate();
+            try
+            {
+                NetworkInterface.Instance.OnUpdate();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"UISystem.OnUpdate: network pump failed: {ex.Message}");
+            }
+        }
+
         private void RegisterChatPanelBindings()
         {
             AddBinding(ChatPanel.ChatMessages);
