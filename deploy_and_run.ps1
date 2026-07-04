@@ -11,11 +11,25 @@ $KnownPaths = @(
 
 $GameDir = $null
 foreach ($drive in [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -eq 'Fixed' -and $_.IsReady }) {
+    # Check known relative paths
     foreach ($path in $KnownPaths) {
         $candidate = Join-Path $drive.RootDirectory.FullName $path
         if (Test-Path (Join-Path $candidate "Cities2.exe")) {
             $GameDir = $candidate
             break
+        }
+    }
+    if ($GameDir) { break }
+
+    # Search all subdirectories of XboxGames (handles GUID-named folders)
+    $xboxRoot = Join-Path $drive.RootDirectory.FullName "XboxGames"
+    if (Test-Path $xboxRoot) {
+        foreach ($sub in Get-ChildItem -LiteralPath $xboxRoot -Directory -ErrorAction SilentlyContinue) {
+            $candidate = Join-Path $sub.FullName "Content"
+            if (Test-Path (Join-Path $candidate "Cities2.exe")) {
+                $GameDir = $candidate
+                break
+            }
         }
     }
     if ($GameDir) { break }
