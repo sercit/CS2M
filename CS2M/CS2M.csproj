@@ -176,6 +176,7 @@
     </Target>
 
     <Target Name="BuildUI" AfterTargets="ILRepacker">
+        <Exec Command="npm install" WorkingDirectory="$(ProjectDir)/../CS2M.UI"/>
         <Exec Command="set &quot;CSII_USERDATAPATH=../dist&quot; &amp;&amp; npm run build" WorkingDirectory="$(ProjectDir)/../CS2M.UI"/>
         <Copy SourceFiles="$(ProjectDir)/../CS2M.UI/mod.json" DestinationFolder="$(ProjectDir)/../dist/Mods/CS2M" SkipUnchangedFiles="true"/>
     </Target>
