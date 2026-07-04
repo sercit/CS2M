@@ -12,7 +12,7 @@ const register: ModRegistrar = (moduleRegistry) => {
     // main menu. Other working CS2 mods (e.g. krzychu124/Traffic) avoid
     // that extend target and only use moduleRegistry.append(...) — we do
     // the same.
-    moduleRegistry.append("GameTopLeft", MainMenuButton);
+    moduleRegistry.append("Menu", MainMenuButton);
     moduleRegistry.append("GameBottomRight", ChatIcon);
     moduleRegistry.append("GameBottomRight", CooperativeOverlay);
 

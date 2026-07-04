@@ -158,14 +158,6 @@ namespace CS2M.UI
             _hubMenuVisible.Update(true);
             _joinMenuVisible.Update(false);
             _hostMenuVisible.Update(false);
-
-            if (_gameMode == GameMode.Game)
-            {
-                _activeGameScreenBinding.Update((GameScreenUISystem.GameScreen)99);
-                return;
-            }
-
-            _activeMenuScreenBinding.Update(99);
         }
 
         private void ShowJoinGameMenu()
@@ -190,9 +182,6 @@ namespace CS2M.UI
             _hubMenuVisible.Update(false);
             _joinMenuVisible.Update(false);
             _hostMenuVisible.Update(false);
-
-            _activeMenuScreenBinding.Update(0);
-            _activeGameScreenBinding.Update(GameScreenUISystem.GameScreen.PauseMenu);
         }
 
         private void HideJoinGameMenu()

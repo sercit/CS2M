@@ -1,4 +1,7 @@
-.cs2m-launcher {
+.launcher {
+    position: fixed;
+    top: 16rem;
+    left: 16rem;
     display: inline-flex;
-    margin: 8rem 0 8rem 8rem;
+    z-index: 1000;
 }

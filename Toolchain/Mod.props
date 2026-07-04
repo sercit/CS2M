@@ -1,15 +1,39 @@
 <Project>
-  <PropertyGroup>
-    <Cities2GameDir>g:\Games\Cities.Skylines.II.v1.5.3f1\Cities.Skylines.II.v1.5.3f1\game</Cities2GameDir>
-    <Cities2ManagedDir>$(Cities2GameDir)\Cities2_Data\Managed</Cities2ManagedDir>
+  <!--
+    Auto-detects Cities: Skylines II on any drive, any installer (Xbox Game Pass, Steam).
+    Override: set CITIES2_GAME_DIR env var, or pass /p:Cities2GameDir=... to dotnet build.
+  -->
+
+  <PropertyGroup Condition="'$(Cities2GameDir)' == '' and '$(CITIES2_GAME_DIR)' != ''">
+    <Cities2GameDir>$(CITIES2_GAME_DIR)</Cities2GameDir>
   </PropertyGroup>
 
+  <!-- Search all fixed drives at build time if path not already known -->
+  <Target Name="FindCities2GameDir"
+          BeforeTargets="ResolveAssemblyReferences"
+          Condition="'$(Cities2GameDir)' == ''">
+    <Exec Command="powershell -NoProfile -NonInteractive -Command &quot;$found = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.DriveType -eq 'Fixed' -and $_.IsReady } | ForEach-Object { $r = $_.RootDirectory.FullName; @('XboxGames\Cities- Skylines II - PC Edition\Content','Program Files (x86)\Steam\steamapps\common\Cities Skylines II','Steam\steamapps\common\Cities Skylines II','SteamLibrary\steamapps\common\Cities Skylines II','Games\Cities Skylines II','Games\Cities.Skylines.II') | ForEach-Object { $p = [IO.Path]::Combine($r, $_); if ([IO.File]::Exists([IO.Path]::Combine($p,'Cities2_Data','Managed','UnityEngine.CoreModule.dll'))) { $p } } } | Select-Object -First 1; if ($found) { $found.Trim() } else { '' }&quot;"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="Cities2GameDir"/>
+    </Exec>
+
+    <Error Condition="'$(Cities2GameDir)' == ''"
+           Text="Cities: Skylines II not found on any drive. Set CITIES2_GAME_DIR environment variable to your game folder." />
+
+    <PropertyGroup>
+      <Cities2ManagedDir>$(Cities2GameDir)\Cities2_Data\Managed</Cities2ManagedDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ReferencePath Include="$(Cities2ManagedDir)\*.dll"/>
+    </ItemGroup>
+
+    <Message Text="Cities: Skylines II found at: $(Cities2GameDir)" Importance="High"/>
+  </Target>
+
   <PropertyGroup>
+    <Cities2ManagedDir Condition="'$(Cities2GameDir)' != ''">$(Cities2GameDir)\Cities2_Data\Managed</Cities2ManagedDir>
     <ReferencePath>$(Cities2ManagedDir);$(ReferencePath)</ReferencePath>
   </PropertyGroup>
-  
-  <Target Name="PrintPaths" BeforeTargets="BeforeBuild">
-      <Message Text="Cities2ManagedDir: $(Cities2ManagedDir)" Importance="High" />
-      <Message Text="ReferencePath: $(ReferencePath)" Importance="High" />
-  </Target>
 </Project>

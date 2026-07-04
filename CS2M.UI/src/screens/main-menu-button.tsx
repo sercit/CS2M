@@ -31,7 +31,7 @@ export const MainMenuButton = () => {
         <>
             {!anyMenuVisible && (
                 <FocusBoundary>
-                    <div className={styles.launcher}>
+                    <div style={{position: "fixed", top: "16rem", left: "16rem", zIndex: 9999}}>
                         <Tooltip
                             tooltip={t("CS2M.UI.Multiplayer", "Multiplayer")}
                             direction="down"

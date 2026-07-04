@@ -45,6 +45,7 @@ export const JoinGameMenu = () => {
     };
 
     return (
+        <div style={{position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999}}>
         <FocusBoundary>
             <Panel
                 header={t("CS2M.UI.JoinGame", "Join Game")}
@@ -123,5 +124,6 @@ export const JoinGameMenu = () => {
                 </div>
             </Panel>
         </FocusBoundary>
+        </div>
     );
 };
