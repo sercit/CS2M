@@ -48,9 +48,16 @@ namespace CS2M.BaseGame
                 preApplyState = Convert.ToInt32(stateObj);
             }
 
-            int randomSeed = ReflectionHelper.GetAttr<int>(tool, "m_RandomSeed");
-            ControlPoint applyStartPoint = ReflectionHelper.GetAttr<ControlPoint>(tool, "m_ApplyStartPoint");
-            ControlPoint lastRaycastPoint = ReflectionHelper.GetAttr<ControlPoint>(tool, "m_LastRaycastPoint");
+            int randomSeed = 0;
+            try { randomSeed = Convert.ToInt32(ReflectionHelper.GetAttr(tool, "m_RandomSeed")); } catch { }
+
+            ControlPoint applyStartPoint = default;
+            object aspObj = ReflectionHelper.GetAttr(tool, "m_ApplyStartPoint");
+            if (aspObj is ControlPoint aspCp) applyStartPoint = aspCp;
+
+            ControlPoint lastRaycastPoint = default;
+            object lrpObj = ReflectionHelper.GetAttr(tool, "m_LastRaycastPoint");
+            if (lrpObj is ControlPoint lrpCp) lastRaycastPoint = lrpCp;
             RoadControlPointSnapshot[] controlPoints = CaptureControlPoints(tool);
 
             command = new RoadApplyCommand

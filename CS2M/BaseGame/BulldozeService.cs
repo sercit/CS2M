@@ -65,7 +65,9 @@ namespace CS2M.BaseGame
                 }
             }
 
-            ControlPoint lastRaycast = ReflectionHelper.GetAttr<ControlPoint>(tool, "m_LastRaycastPoint");
+            ControlPoint lastRaycast = default;
+            object lrObj2 = ReflectionHelper.GetAttr(tool, "m_LastRaycastPoint");
+            if (lrObj2 is ControlPoint lrCp2) lastRaycast = lrCp2;
             Entity target = lastRaycast.m_OriginalEntity;
             if (target == Entity.Null)
             {

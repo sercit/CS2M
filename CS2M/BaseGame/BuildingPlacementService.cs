@@ -108,7 +108,9 @@ namespace CS2M.BaseGame
                 return false;
             }
 
-            ControlPoint lastRaycast = ReflectionHelper.GetAttr<ControlPoint>(tool, "m_LastRaycastPoint");
+            ControlPoint lastRaycast = default;
+            object lrObj = ReflectionHelper.GetAttr(tool, "m_LastRaycastPoint");
+            if (lrObj is ControlPoint lrCp) lastRaycast = lrCp;
             if (lastRaycast.m_Rotation.Equals(default(quaternion)))
             {
                 lastRaycast.m_Rotation = quaternion.identity;

@@ -41,9 +41,15 @@ namespace CS2M.BaseGame
                 return false;
             }
 
-            ControlPoint startPoint = ReflectionHelper.GetAttr<ControlPoint>(tool, "m_StartPoint");
+            ControlPoint startPoint = default;
+            object spObj = ReflectionHelper.GetAttr(tool, "m_StartPoint");
+            if (spObj is ControlPoint spCp) startPoint = spCp;
+
             ControlPoint snapPoint = GetSnapPoint(tool);
-            ControlPoint raycastPoint = ReflectionHelper.GetAttr<ControlPoint>(tool, "m_RaycastPoint");
+
+            ControlPoint raycastPoint = default;
+            object rpObj = ReflectionHelper.GetAttr(tool, "m_RaycastPoint");
+            if (rpObj is ControlPoint rpCp) raycastPoint = rpCp;
 
             int preApplyState = 0;
             object stateObj = ReflectionHelper.GetAttr(tool, "m_State");
