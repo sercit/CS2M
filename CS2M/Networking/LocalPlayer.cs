@@ -236,7 +236,13 @@ namespace CS2M.Networking
             _lastSliceIndex = -1;
             PlayerStatus = PlayerStatus.WAITING_TO_JOIN;
             _uiSystem?.SetLoadProgress(0, 0);
-            SendToServer(new JoinRequestCommand());
+            SendToServer(new JoinRequestCommand
+            {
+                Username = Username,
+                ModVersion = VersionUtil.GetModVersion().ToString(),
+                GameVersion = VersionUtil.GetGameVersionString(),
+                ConnectionTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            });
             Log.Debug(isRetry
                 ? "LocalPlayer: world transfer retry request sent to server."
                 : "LocalPlayer: join request sent to server.");
