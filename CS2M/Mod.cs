@@ -2,6 +2,7 @@ using System.Reflection;
 using Colossal.IO.AssetDatabase;
 using CS2M.Commands;
 using CS2M.Commands.ApiServer;
+using CS2M.Helpers;
 using CS2M.Mods;
 using CS2M.Networking;
 using CS2M.Settings;
@@ -64,11 +65,16 @@ namespace CS2M
             CommandInternal.Instance = new CommandInternal();
             ApiCommand.Instance = new ApiCommand();
 
+            // Apply only the two Harmony patches required for multiplayer save loading.
+            // Full PatchAll() is skipped — it caused a Unity ECS hang (error.typeHang)
+            // ~30 s after main menu entry. These two patches only fire during
+            // GameManager.Load() so they are safe to apply unconditionally.
+            var harmony = new Harmony(HarmonyPatchID);
+            harmony.CreateClassProcessor(typeof(CS2M.Helpers.AssetDataPatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.Helpers.ReadSystemPatch)).Patch();
+
             // Register the UI system so the CS2M button appears on the main menu and
-            // the multiplayer screens (join / host / hub) can be opened. The actual
-            // ECS GameSimulation systems and Harmony patches are intentionally skipped:
-            // PatchAll(Assembly.GetExecutingAssembly()) was triggering a Unity ECS hang
-            // (error.typeHang) ~30 s after main menu entry.
+            // the multiplayer screens (join / host / hub) can be opened.
             updateSystem.UpdateAt<UISystem>(SystemUpdatePhase.UIUpdate);
 
             Log.Info("Loading complete");
