@@ -157,26 +157,17 @@ namespace CS2M.BaseGame.Systems
         {
             long delta = currentMoney - _lastMoney;
             long absDelta = Math.Abs(delta);
-            
-            // Check rate of change
+
             if (absDelta > MAX_REASONABLE_RATE_OF_CHANGE)
             {
-                Log.Warn($"Money changed too rapidly: {delta} in one frame!");
-                Log.Warn($"Validating source...");
-                
-                // Revert to previous valid value
-                SetMoney(_lastMoney);
-                return;
+                Log.Warn($"Money changed too rapidly: {delta} in one interval (server owns the value, not reverting).");
             }
-            
-            // Add measurement for further analysis
+
             AddMeasurement(currentMoney, delta);
-            
-            // Check for suspicious patterns (only log once per session)
+
             if (HasSuspiciousPattern())
             {
                 Log.Warn("Suspicious money activity detected!");
-                // Could trigger additional validation here
             }
         }
 
@@ -298,15 +289,37 @@ namespace CS2M.BaseGame.Systems
         /// <summary>
         ///     Sets money value (called by server and client)
         /// </summary>
+        private static readonly string[] MoneyFieldCandidates = { "m_Money", "m_Amount", "m_Budget", "m_MoneyAmount", "moneyAmount" };
+
         public void SetMoney(long money)
         {
             try
             {
-                _citySystem.SetPrivateProperty("moneyAmount", money);
+                const System.Reflection.BindingFlags flags =
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.FlattenHierarchy;
+
+                var type = _citySystem.GetType();
+                foreach (var name in MoneyFieldCandidates)
+                {
+                    var field = type.GetField(name, flags);
+                    if (field != null)
+                    {
+                        field.SetValue(_citySystem, money);
+                        return;
+                    }
+                    var prop = type.GetProperty(name, flags);
+                    if (prop != null && prop.CanWrite)
+                    {
+                        prop.SetValue(_citySystem, money);
+                        return;
+                    }
+                }
+                Log.Warn("SetMoney: could not find writable money field on CitySystem — money sync is read-only on this version.");
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to set money: {ex.Message}");
+                Log.Warn($"SetMoney: {ex.Message}");
             }
         }
 

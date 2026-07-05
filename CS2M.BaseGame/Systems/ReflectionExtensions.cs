@@ -10,7 +10,9 @@ namespace CS2M.BaseGame.Systems
         public static void SetPrivateProperty(this object obj, string propertyName, object value)
         {
             var prop = obj.GetType().GetProperty(propertyName, MemberLookup);
-            prop?.SetValue(obj, value);
+            if (prop == null || !prop.CanWrite)
+                throw new InvalidOperationException($"Set Method not found for '{propertyName}'");
+            prop.SetValue(obj, value);
         }
 
         public static void SetPrivateField(this object obj, string fieldName, object value)
