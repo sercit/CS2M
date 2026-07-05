@@ -49,7 +49,28 @@ namespace CS2M.BaseGame
             }
 
             int randomSeed = 0;
-            try { randomSeed = Convert.ToInt32(ReflectionHelper.GetAttr(tool, "m_RandomSeed")); } catch { }
+            try
+            {
+                object rsObj = ReflectionHelper.GetAttr(tool, "m_RandomSeed");
+                if (rsObj != null)
+                {
+                    Type rsType = rsObj.GetType();
+                    if (rsType == typeof(int)) { randomSeed = (int)rsObj; }
+                    else if (rsType == typeof(uint)) { randomSeed = (int)(uint)rsObj; }
+                    else
+                    {
+                        foreach (string fname in new[] { "value", "m_Value", "Value", "seed", "m_Seed" })
+                        {
+                            System.Reflection.FieldInfo f = rsType.GetField(fname,
+                                System.Reflection.BindingFlags.Public |
+                                System.Reflection.BindingFlags.NonPublic |
+                                System.Reflection.BindingFlags.Instance);
+                            if (f != null) { randomSeed = Convert.ToInt32(f.GetValue(rsObj)); break; }
+                        }
+                    }
+                }
+            }
+            catch { }
 
             ControlPoint applyStartPoint = default;
             object aspObj = ReflectionHelper.GetAttr(tool, "m_ApplyStartPoint");
@@ -353,7 +374,8 @@ namespace CS2M.BaseGame
                     System.Reflection.BindingFlags.Instance);
                 if (f != null)
                 {
-                    f.SetValue(newSeed, seedValue);
+                    object converted = Convert.ChangeType(seedValue, f.FieldType);
+                    f.SetValue(newSeed, converted);
                     ReflectionHelper.SetAttr(tool, "m_RandomSeed", newSeed);
                     return;
                 }
