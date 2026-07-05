@@ -5,6 +5,8 @@ using System.Linq;
 using Colossal.Serialization.Entities;
 using Colossal.UI.Binding;
 using CS2M.API.Networking;
+using CS2M.Commands;
+using CS2M.Commands.ApiServer;
 using CS2M.Mods;
 using CS2M.Networking;
 using Game;
@@ -61,6 +63,10 @@ namespace CS2M.UI
         protected override void OnCreate()
         {
             base.OnCreate();
+
+            // Build the MessagePack serialiser model now that ECS World is ready.
+            CommandInternal.Instance.RefreshModel();
+            ApiCommand.Instance.RefreshModel();
 
             AddBinding(new TriggerBinding(Mod.Name, "ShowMultiplayerMenu", ShowMultiplayerMenu));
             AddBinding(new TriggerBinding(Mod.Name, "ShowJoinGameMenu", ShowJoinGameMenu));

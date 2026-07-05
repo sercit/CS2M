@@ -59,13 +59,10 @@ namespace CS2M
             // Initialise the command serialisation pipeline. These are plain-object
             // singletons (no ECS, no Harmony) and must be ready before any network
             // call fires (e.g. ConnectionEstablished → SendToServer).
+            // RefreshModel() is deferred to first use (called from UISystem.OnCreate
+            // via EnsureCommandModel) so that ECS World is fully ready by then.
             CommandInternal.Instance = new CommandInternal();
             ApiCommand.Instance = new ApiCommand();
-
-            // ModSupport.Init() calls LoadModConnections() which calls RefreshModel()
-            // on both singletons above.  It also wires onGamePreload for mod handlers.
-            // This does NOT register ECS systems or call PatchAll, so it is safe here.
-            ModSupport.Instance.Init();
 
             // Register the UI system so the CS2M button appears on the main menu and
             // the multiplayer screens (join / host / hub) can be opened. The actual
