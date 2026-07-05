@@ -126,7 +126,7 @@ namespace CS2M.BaseGame
 
             ReflectionHelper.SetAttr(tool, "m_ApplyStartPoint", FromSnapshot(command.ApplyStartPoint));
             ReflectionHelper.SetAttr(tool, "m_LastRaycastPoint", FromSnapshot(command.LastRaycastPoint));
-            ReflectionHelper.SetAttr(tool, "m_RandomSeed", command.RandomSeed);
+            SetRandomSeed(tool, command.RandomSeed);
 
             object stateObj = ReflectionHelper.GetAttr(tool, "m_State");
             if (stateObj != null)
@@ -326,6 +326,40 @@ namespace CS2M.BaseGame
 
             PrefabCache[prefabName] = prefab;
             return true;
+        }
+
+        private static void SetRandomSeed(NetToolSystem tool, int seedValue)
+        {
+            object existing = ReflectionHelper.GetAttr(tool, "m_RandomSeed");
+            if (existing == null)
+            {
+                return;
+            }
+
+            Type seedType = existing.GetType();
+            if (seedType == typeof(int))
+            {
+                ReflectionHelper.SetAttr(tool, "m_RandomSeed", seedValue);
+                return;
+            }
+
+            // Game.Common.RandomSeed is a struct — create instance and set its int field
+            object newSeed = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(seedType);
+            foreach (string fname in new[] { "value", "m_Value", "Value", "seed", "m_Seed" })
+            {
+                System.Reflection.FieldInfo f = seedType.GetField(fname,
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance);
+                if (f != null)
+                {
+                    f.SetValue(newSeed, seedValue);
+                    ReflectionHelper.SetAttr(tool, "m_RandomSeed", newSeed);
+                    return;
+                }
+            }
+
+            Log.Warn($"RoadSync: could not set m_RandomSeed — unknown field layout for {seedType}.");
         }
     }
 }
