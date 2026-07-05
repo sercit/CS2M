@@ -56,16 +56,22 @@ namespace CS2M
             Settings.OnSetLoggingLevel(Settings.LoggingLevel);
             Log.Info("Configured and initialised mod settings");
 
+            // Initialise the command serialisation pipeline. These are plain-object
+            // singletons (no ECS, no Harmony) and must be ready before any network
+            // call fires (e.g. ConnectionEstablished → SendToServer).
+            CommandInternal.Instance = new CommandInternal();
+            ApiCommand.Instance = new ApiCommand();
+
+            // ModSupport.Init() calls LoadModConnections() which calls RefreshModel()
+            // on both singletons above.  It also wires onGamePreload for mod handlers.
+            // This does NOT register ECS systems or call PatchAll, so it is safe here.
+            ModSupport.Instance.Init();
+
             // Register the UI system so the CS2M button appears on the main menu and
             // the multiplayer screens (join / host / hub) can be opened. The actual
-            // mod support / networking / harmony patches are intentionally skipped in
-            // this load path: registering ECS systems on SystemUpdatePhase.GameSimulation
-            // plus PatchAll(Assembly.GetExecutingAssembly()) was triggering a Unity
-            // ECS hang (error.typeHang) ~30s after the game entered the main menu, even
-            // though every system OnUpdate returns early without an active session.
-            // Until the cooperative multiplayer server exists there is nothing for the
-            // BaseGame sync systems to do anyway; the UI is the only thing that
-            // currently has a usable surface.
+            // ECS GameSimulation systems and Harmony patches are intentionally skipped:
+            // PatchAll(Assembly.GetExecutingAssembly()) was triggering a Unity ECS hang
+            // (error.typeHang) ~30 s after main menu entry.
             updateSystem.UpdateAt<UISystem>(SystemUpdatePhase.UIUpdate);
 
             Log.Info("Loading complete");
