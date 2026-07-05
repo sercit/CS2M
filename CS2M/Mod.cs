@@ -1,11 +1,13 @@
 using System.Reflection;
 using Colossal.IO.AssetDatabase;
+using CS2M.BaseGame.Systems;
 using CS2M.Commands;
 using CS2M.Commands.ApiServer;
 using CS2M.Helpers;
 using CS2M.Mods;
 using CS2M.Networking;
 using CS2M.Settings;
+using CS2M.Systems;
 using CS2M.UI;
 using Game;
 using Game.Modding;
@@ -65,17 +67,37 @@ namespace CS2M
             CommandInternal.Instance = new CommandInternal();
             ApiCommand.Instance = new ApiCommand();
 
-            // Apply only the two Harmony patches required for multiplayer save loading.
-            // Full PatchAll() is skipped — it caused a Unity ECS hang (error.typeHang)
-            // ~30 s after main menu entry. These two patches only fire during
-            // GameManager.Load() so they are safe to apply unconditionally.
+            // Apply only the Harmony patches required for multiplayer:
+            //   - Two patches for save/load interop (fire only during GameManager.Load).
+            //   - Five targeted tool patches that intercept Apply() on each tool system so
+            //     the host can replicate actions to clients and clients can send requests
+            //     to the server.  These are class-processor patches (not PatchAll) so they
+            //     don't trigger the ECS typeHang observed with broad patching.
             var harmony = new Harmony(HarmonyPatchID);
             harmony.CreateClassProcessor(typeof(CS2M.Helpers.AssetDataPatch)).Patch();
             harmony.CreateClassProcessor(typeof(CS2M.Helpers.ReadSystemPatch)).Patch();
 
+            // Tool-interception patches (CS2M project, CS2M.BaseGame namespace).
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.BuildingPlacementPatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.RoadSyncPatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.BulldozePatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.ZoneSyncPatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.AreaSyncPatch)).Patch();
+
             // Register the UI system so the CS2M button appears on the main menu and
             // the multiplayer screens (join / host / hub) can be opened.
             updateSystem.UpdateAt<UISystem>(SystemUpdatePhase.UIUpdate);
+
+            // Register ECS synchronisation systems.  These are safe to add alongside
+            // the targeted Harmony patches because they don't use PatchAll.
+            // CS2M.BaseGame sync systems (authoritative frame/money/time/XP broadcast).
+            updateSystem.UpdateAt<FrameSyncSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<MoneySyncSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<TimeSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<XPMilestoneSyncSystem>(SystemUpdatePhase.GameSimulation);
+
+            // Cooperative overlay system (cursor tracking, activity log, map pings).
+            updateSystem.UpdateAt<CooperativeSyncSystem>(SystemUpdatePhase.UIUpdate);
 
             Log.Info("Loading complete");
         }
