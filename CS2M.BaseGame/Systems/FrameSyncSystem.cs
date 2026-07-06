@@ -88,94 +88,53 @@ namespace CS2M.BaseGame.Systems
 
         private void ProcessFrameQueue()
         {
-            while (_frameSamples.Count > 0 && 
-                   _frameSamples.Peek().Frame <= GetEffectiveFrame())
+            lock (_frameSamples)
             {
-                var sample = _frameSamples.Dequeue();
-                UpdateFrameFromSample(sample);
+                // Drop all but the latest sample — we just want the most recent server frame
+                while (_frameSamples.Count > 1)
+                    _frameSamples.Dequeue();
+
+                if (_frameSamples.Count == 1)
+                {
+                    var sample = _frameSamples.Dequeue();
+                    ApplyFrameSample(sample);
+                }
             }
+        }
+
+        private void ApplyFrameSample(FrameSample sample)
+        {
+            _interpolationCurrent = sample.Frame;
+            SetEffectiveFrame(sample.Frame);
+
+            long currentTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+            double latencyMs = (currentTimestamp - sample.Timestamp) /
+                               (double)System.Diagnostics.Stopwatch.Frequency * 1000.0;
+            _avgLatency = Mathf.Lerp(_avgLatency, (float)latencyMs, 0.1f);
+
+            Log.Trace($"Frame updated to {sample.Frame}, latency: {latencyMs:F1}ms");
         }
 
         private void SmoothInterpolation()
         {
-            if (_frameSamples.Count == 0)
-                return;
-
-            var latestSample = _frameSamples.Last();
-            uint effectiveFrame = GetEffectiveFrame();
-            
-            // Calculate how far behind we are
-            int frameDiff = (int)(latestSample.Frame - effectiveFrame);
-            
-            if (frameDiff > 0 && frameDiff <= MAX_HISTORY_SIZE)
-            {
-                // We have enough history, interpolate
-                _interpolationTarget = latestSample.Frame;
-                _interpolationCurrent = Mathf.Lerp(
-                    _interpolationCurrent,
-                    _interpolationTarget,
-                    INTERPOLATION_SPEED * UnityEngine.Time.deltaTime
-                );
-            }
-            else if (frameDiff > MAX_HISTORY_SIZE)
-            {
-                // Too far behind, snap to latest
-                SnapToFrame(latestSample.Frame);
-            }
-        }
-
-        private void UpdateFrameFromSample(FrameSample sample)
-        {
-            uint currentFrame = GetEffectiveFrame();
-            float frameDelta = Math.Abs(currentFrame - sample.Frame);
-            
-            // Check for unreasonable jumps — but always accept the first sample (client starts at 0)
-            if (frameDelta > MAX_REASONABLE_FRAME_DELTA && currentFrame != 0)
-            {
-                Log.Warn($"Frame sync detected unusual jump: {currentFrame} -> {sample.Frame}");
-                // Don't accept this sample
-                return;
-            }
-            
-            // Apply frame value
-            SetEffectiveFrame(sample.Frame);
-            _interpolationCurrent = sample.Frame;
-            
-            // Track latency based on timestamp
-            long currentTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
-            double latencySeconds = (currentTimestamp - sample.Timestamp) / (double)System.Diagnostics.Stopwatch.Frequency;
-            double latencyMs = latencySeconds * 1000.0;
-            
-            // Smooth average latency
-            _avgLatency = Mathf.Lerp(_avgLatency, (float)latencyMs, 0.1f);
-            
-            Log.Trace($"Frame updated to {sample.Frame}, latency: {latencyMs:F1}ms");
+            // No-op: frame is applied directly in ProcessFrameQueue
         }
 
         private uint GetEffectiveFrame()
         {
-            // Return interpolated frame for smooth rendering
-            if (Command.CurrentRole == MultiplayerRole.Client && _frameSamples.Count > 0)
-            {
-                return (uint)_interpolationCurrent;
-            }
             return _simulationSystem.frameIndex;
         }
 
         private void SetEffectiveFrame(uint frame)
         {
-            _simulationSystem.SetPrivateProperty("frameIndex", frame);
+            try { _simulationSystem.SetPrivateProperty("frameIndex", frame); }
+            catch { _simulationSystem.SetPrivateField("frameIndex", frame); }
         }
 
         private void SnapToFrame(uint targetFrame)
         {
-            uint currentFrame = _simulationSystem.frameIndex;
-            if (Mathf.Abs((int)currentFrame - (int)targetFrame) > 120)
-            {
-                Log.Warn($"Snapping frame from {currentFrame} to {targetFrame}");
-                SetEffectiveFrame(targetFrame);
-                _interpolationCurrent = targetFrame;
-            }
+            _interpolationCurrent = targetFrame;
+            SetEffectiveFrame(targetFrame);
         }
 
         /// <summary>

@@ -11,9 +11,9 @@ namespace CS2M.Commands.Handler.BaseGame
     /// </summary>
     public class MoneyCommandHandler : ClientCommandHandler<MoneyCommand>
     {
-        // Rate limiting: max 10 updates per second
+        // Rate limiting: max 60 updates per second
         private static readonly System.Collections.Generic.List<long> _lastUpdateTimes = new();
-        private const int MAX_UPDATES_PER_SECOND = 10;
+        private const int MAX_UPDATES_PER_SECOND = 60;
 
         protected override void OnValidatedCommand(MoneyCommand command)
         {
