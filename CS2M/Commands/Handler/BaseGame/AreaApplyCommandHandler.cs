@@ -91,27 +91,20 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
-            bool applied = AreaSyncService.TryReplayApply(command);
-            if (!applied)
+            CS2M.BaseGame.GameThreadDispatcher.Enqueue(() =>
             {
-                Log.Warn($"AreaApplyCommandHandler: failed to apply area replication nonce {command.ApplyNonce}.");
-            }
-            else
-            {
-                // Log activity to the cooperative ledger
+                bool applied = AreaSyncService.TryReplayApply(command);
+                if (!applied) { Log.Warn($"AreaApplyCommandHandler: failed to apply area nonce {command.ApplyNonce}."); return; }
+
                 Unity.Mathematics.float3 pos = Unity.Mathematics.float3.zero;
                 if (command.ControlPoints != null && command.ControlPoints.Length > 0 && command.ControlPoints[0] != null)
-                {
                     pos = new Unity.Mathematics.float3(command.ControlPoints[0].PositionX, command.ControlPoints[0].PositionY, command.ControlPoints[0].PositionZ);
-                }
 
                 string areaName = string.IsNullOrEmpty(command.PrefabName) ? "Area boundaries" : command.PrefabName;
                 CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
                     CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
-                    $"Modified area: {areaName}",
-                    pos
-                );
-            }
+                    $"Modified area: {areaName}", pos);
+            });
         }
 
         private static bool MarkNonce(int nonce, HashSet<int> set, Queue<int> order, object sync)

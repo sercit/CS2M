@@ -85,21 +85,15 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
-            bool applied = BulldozeService.TryApplyBulldoze(command);
-            if (!applied)
+            CS2M.BaseGame.GameThreadDispatcher.Enqueue(() =>
             {
-                Log.Warn(
-                    $"BulldozeCommandHandler: failed to apply replicated bulldoze for {command.TargetEntityIndex}:{command.TargetEntityVersion}.");
-            }
-            else
-            {
-                // Log activity to the cooperative ledger
+                bool applied = BulldozeService.TryApplyBulldoze(command);
+                if (!applied) { Log.Warn($"BulldozeCommandHandler: failed to apply replicated bulldoze for {command.TargetEntityIndex}:{command.TargetEntityVersion}."); return; }
+
                 CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
                     CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
-                    "Demolished objects",
-                    Unity.Mathematics.float3.zero
-                );
-            }
+                    "Demolished objects", Unity.Mathematics.float3.zero);
+            });
         }
 
         private static bool MarkBulldozeNonce(int nonce, HashSet<int> set, Queue<int> order, object sync)

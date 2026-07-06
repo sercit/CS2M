@@ -84,20 +84,16 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
-            bool applied = BuildingPlacementService.TryApplyPlacement(command);
-            if (!applied)
+            CS2M.BaseGame.GameThreadDispatcher.Enqueue(() =>
             {
-                Log.Warn($"BuildingCreateCommandHandler: failed to apply replicated placement for '{command.PrefabName}'.");
-            }
-            else
-            {
-                // Log activity to the cooperative ledger
+                bool applied = BuildingPlacementService.TryApplyPlacement(command);
+                if (!applied) { Log.Warn($"BuildingCreateCommandHandler: failed to apply replicated placement for '{command.PrefabName}'."); return; }
+
                 CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
                     CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
                     $"Placed building: {command.PrefabName}",
-                    new Unity.Mathematics.float3(command.PositionX, command.PositionY, command.PositionZ)
-                );
-            }
+                    new Unity.Mathematics.float3(command.PositionX, command.PositionY, command.PositionZ));
+            });
         }
 
         private static bool MarkPlacementNonce(

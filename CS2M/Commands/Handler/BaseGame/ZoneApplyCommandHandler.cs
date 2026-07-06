@@ -99,35 +99,24 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
-            bool applied = ZoneSyncService.TryReplayApply(command);
-            if (!applied)
+            CS2M.BaseGame.GameThreadDispatcher.Enqueue(() =>
             {
-                Log.Warn($"ZoneApplyCommandHandler: failed to apply zoning replication nonce {command.ApplyNonce}.");
-            }
-            else
-            {
-                // Log activity to the cooperative ledger
+                bool applied = ZoneSyncService.TryReplayApply(command);
+                if (!applied) { Log.Warn($"ZoneApplyCommandHandler: failed to apply zoning nonce {command.ApplyNonce}."); return; }
+
                 Unity.Mathematics.float3 pos = Unity.Mathematics.float3.zero;
                 if (command.RaycastPoint != null)
-                {
                     pos = new Unity.Mathematics.float3(command.RaycastPoint.PositionX, command.RaycastPoint.PositionY, command.RaycastPoint.PositionZ);
-                }
                 else if (command.StartPoint != null)
-                {
                     pos = new Unity.Mathematics.float3(command.StartPoint.PositionX, command.StartPoint.PositionY, command.StartPoint.PositionZ);
-                }
                 else if (command.SnapPoint != null)
-                {
                     pos = new Unity.Mathematics.float3(command.SnapPoint.PositionX, command.SnapPoint.PositionY, command.SnapPoint.PositionZ);
-                }
 
                 string zoneName = string.IsNullOrEmpty(command.PrefabName) ? "Zone grid" : command.PrefabName;
                 CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
                     CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
-                    $"Applied zoning: {zoneName}",
-                    pos
-                );
-            }
+                    $"Applied zoning: {zoneName}", pos);
+            });
         }
 
         private static bool MarkNonce(int nonce, HashSet<int> set, Queue<int> order, object sync)

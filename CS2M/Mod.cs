@@ -93,7 +93,7 @@ namespace CS2M
             // CS2M.BaseGame sync systems (authoritative frame/money/time/XP broadcast).
             updateSystem.UpdateAt<FrameSyncSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<MoneySyncSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<CS2M.BaseGame.RoadReplaySystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<CS2M.BaseGame.ActionReplaySystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<TimeSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<XPMilestoneSyncSystem>(SystemUpdatePhase.GameSimulation);
 

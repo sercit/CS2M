@@ -14,7 +14,9 @@
       "Bash(gh repo:*)",
       "Bash(git add:*)",
       "Bash(git commit -m ':*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(grep:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

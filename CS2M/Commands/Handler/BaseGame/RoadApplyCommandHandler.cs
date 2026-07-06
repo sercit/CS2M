@@ -100,10 +100,23 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
-            // Queue for replay on the next ECS OnUpdate — EntityCommandBuffer is only
-            // allowed inside the ECS update phase, not in a network callback.
-            RoadSyncService.PendingReplays.Enqueue(command);
-            Log.Info($"RoadApplyCommandHandler: queued road nonce={command.ApplyNonce} for ECS replay.");
+            CS2M.BaseGame.GameThreadDispatcher.Enqueue(() =>
+            {
+                bool applied = RoadSyncService.TryReplayApply(command);
+                if (!applied) { Log.Warn($"RoadApplyCommandHandler: failed to apply road nonce {command.ApplyNonce}."); return; }
+
+                Unity.Mathematics.float3 pos = Unity.Mathematics.float3.zero;
+                if (command.LastRaycastPoint != null)
+                    pos = new Unity.Mathematics.float3(command.LastRaycastPoint.PositionX, command.LastRaycastPoint.PositionY, command.LastRaycastPoint.PositionZ);
+                else if (command.ApplyStartPoint != null)
+                    pos = new Unity.Mathematics.float3(command.ApplyStartPoint.PositionX, command.ApplyStartPoint.PositionY, command.ApplyStartPoint.PositionZ);
+                else if (command.ControlPoints != null && command.ControlPoints.Length > 0 && command.ControlPoints[0] != null)
+                    pos = new Unity.Mathematics.float3(command.ControlPoints[0].PositionX, command.ControlPoints[0].PositionY, command.ControlPoints[0].PositionZ);
+
+                CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
+                    CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
+                    $"Built road: {command.PrefabName}", pos);
+            });
         }
 
         private static bool MarkNonce(int nonce, HashSet<int> set, Queue<int> order, object sync)
