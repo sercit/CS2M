@@ -305,13 +305,13 @@ namespace CS2M.BaseGame.Systems
                     var field = type.GetField(name, flags);
                     if (field != null)
                     {
-                        field.SetValue(_citySystem, money);
+                        field.SetValue(_citySystem, Convert.ChangeType(money, field.FieldType));
                         return;
                     }
                     var prop = type.GetProperty(name, flags);
                     if (prop != null && prop.CanWrite)
                     {
-                        prop.SetValue(_citySystem, money);
+                        prop.SetValue(_citySystem, Convert.ChangeType(money, prop.PropertyType));
                         return;
                     }
                 }

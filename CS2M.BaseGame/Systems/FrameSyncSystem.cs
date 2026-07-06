@@ -129,8 +129,8 @@ namespace CS2M.BaseGame.Systems
             uint currentFrame = GetEffectiveFrame();
             float frameDelta = Math.Abs(currentFrame - sample.Frame);
             
-            // Check for unreasonable jumps (anti-cheat/validation)
-            if (frameDelta > MAX_REASONABLE_FRAME_DELTA)
+            // Check for unreasonable jumps — but always accept the first sample (client starts at 0)
+            if (frameDelta > MAX_REASONABLE_FRAME_DELTA && currentFrame != 0)
             {
                 Log.Warn($"Frame sync detected unusual jump: {currentFrame} -> {sample.Frame}");
                 // Don't accept this sample
