@@ -28,6 +28,7 @@ namespace CS2M.BaseGame
                 return;
             }
 
+            Log.Info($"ServiceBudgetSyncPatch: sending budget entity={service.Index}:{service.Version} → {percentage}%.");
             Command.SendToAll(new ServiceBudgetSyncCommand
             {
                 ServiceEntityIndex = service.Index,

@@ -54,11 +54,12 @@ namespace CS2M.Commands.Handler.BaseGame
 
         private bool IsValidFrameJump(uint newFrame)
         {
+            // First frame ever received — always accept as the baseline.
             if (_lastProcessedFrame == 0)
-                return false;
+                return true;
 
             int diff = (int)(newFrame - _lastProcessedFrame);
-            
+
             // Accept normal progression
             if (diff >= 0 && diff <= MAX_FRAME_JUMP)
                 return true;

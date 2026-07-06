@@ -19,6 +19,7 @@ namespace CS2M.Commands.Handler.BaseGame
             // On server: replicate to all other clients
             if (Command.CurrentRole == MultiplayerRole.Server)
             {
+                Log.Info($"ServiceBudgetSyncCommandHandler: relaying to clients entity={command.ServiceEntityIndex}:{command.ServiceEntityVersion} → {command.Percentage}%.");
                 Command.SendToClients?.Invoke(command);
                 return;
             }
@@ -60,7 +61,7 @@ namespace CS2M.Commands.Handler.BaseGame
                         command.Percentage);
                 }
 
-                Log.Debug($"ServiceBudgetSyncCommandHandler: applied budget {command.ServiceEntityIndex}:{command.ServiceEntityVersion} → {command.Percentage}%.");
+                Log.Info($"ServiceBudgetSyncCommandHandler: applied budget {command.ServiceEntityIndex}:{command.ServiceEntityVersion} → {command.Percentage}%.");
             }
             catch (Exception ex)
             {

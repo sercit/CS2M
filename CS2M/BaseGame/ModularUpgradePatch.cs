@@ -39,7 +39,7 @@ namespace CS2M.BaseGame
                 if (TryBuildCommand(__instance, requestOnly: true, out ModularUpgradeCommand request))
                 {
                     Command.SendToServer?.Invoke(request);
-                    Log.Debug($"ModularUpgradePatch: sent upgrade request '{request.UpgradePrefabName}'.");
+                    Log.Info($"ModularUpgradePatch: sent upgrade request '{request.UpgradePrefabName}' nonce={request.UpgradeNonce}.");
                 }
 
                 __result = inputDeps;
@@ -62,7 +62,7 @@ namespace CS2M.BaseGame
             }
 
             Command.SendToClients?.Invoke(__state);
-            Log.Debug($"ModularUpgradePatch: replicated upgrade '{__state.UpgradePrefabName}' to clients.");
+            Log.Info($"ModularUpgradePatch: replicated upgrade '{__state.UpgradePrefabName}' nonce={__state.UpgradeNonce} to clients.");
         }
 
         private static bool ShouldHandle(ObjectToolSystem tool)

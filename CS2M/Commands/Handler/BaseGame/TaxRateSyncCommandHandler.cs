@@ -18,6 +18,7 @@ namespace CS2M.Commands.Handler.BaseGame
             // On server: replicate to all other clients (sender already applied locally)
             if (Command.CurrentRole == MultiplayerRole.Server)
             {
+                Log.Info($"TaxRateSyncCommandHandler: relaying to clients setter={command.SetterMethod}, param={command.Param1}, rate={command.Rate}.");
                 Command.SendToClients?.Invoke(command);
                 return;
             }
@@ -65,7 +66,7 @@ namespace CS2M.Commands.Handler.BaseGame
                 }
             }
 
-            Log.Debug($"TaxRateSyncCommandHandler: applied setter={command.SetterMethod}, param={command.Param1}, rate={command.Rate}.");
+            Log.Info($"TaxRateSyncCommandHandler: applied setter={command.SetterMethod}, param={command.Param1}, rate={command.Rate}.");
         }
     }
 }

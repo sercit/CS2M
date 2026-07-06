@@ -42,12 +42,18 @@ namespace CS2M.Commands.Handler.BaseGame
 
             if (!MarkNonce(command.UpgradeNonce, ProcessedRequestNonces, ProcessedRequestNonceOrder, RequestNonceLock))
             {
+                Log.Debug($"ModularUpgradeCommandHandler: duplicate request nonce {command.UpgradeNonce} ignored.");
                 return;
             }
 
             bool applied = ModularUpgradeService.TryApplyUpgrade(command);
-            if (!applied) return;
+            if (!applied)
+            {
+                Log.Warn($"ModularUpgradeCommandHandler: failed to apply upgrade '{command.UpgradePrefabName}' nonce={command.UpgradeNonce}.");
+                return;
+            }
 
+            Log.Info($"ModularUpgradeCommandHandler: applied upgrade '{command.UpgradePrefabName}' nonce={command.UpgradeNonce}, relaying to clients.");
             command.RequestOnly = false;
             Command.SendToClients?.Invoke(command);
 
@@ -65,10 +71,16 @@ namespace CS2M.Commands.Handler.BaseGame
 
             if (!MarkNonce(command.UpgradeNonce, ProcessedReplicationNonces, ProcessedReplicationNonceOrder, ReplicationNonceLock))
             {
+                Log.Debug($"ModularUpgradeCommandHandler: duplicate replication nonce {command.UpgradeNonce} ignored.");
                 return;
             }
 
+            Log.Info($"ModularUpgradeCommandHandler: received upgrade '{command.UpgradePrefabName}' nonce={command.UpgradeNonce}, applying.");
             bool applied = ModularUpgradeService.TryApplyUpgrade(command);
+            if (!applied)
+            {
+                Log.Warn($"ModularUpgradeCommandHandler: failed to apply upgrade '{command.UpgradePrefabName}' nonce={command.UpgradeNonce}.");
+            }
             if (applied)
             {
                 // Log activity to cooperative registry

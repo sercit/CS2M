@@ -19,6 +19,7 @@ namespace CS2M.BaseGame
         {
             if (ReplayScope.IsReplayActive) return;
             if (NetworkInterface.Instance?.LocalPlayer?.PlayerStatus != CS2M.API.Networking.PlayerStatus.PLAYING) return;
+            Log.Info($"TaxAreaRatePatch: sending SetTaxRate({areaType}, {rate}).");
             Command.SendToAll(new TaxRateSyncCommand { SetterMethod = 0, Param1 = (int)areaType, Rate = rate });
         }
     }
@@ -31,6 +32,7 @@ namespace CS2M.BaseGame
         {
             if (ReplayScope.IsReplayActive) return;
             if (NetworkInterface.Instance?.LocalPlayer?.PlayerStatus != CS2M.API.Networking.PlayerStatus.PLAYING) return;
+            Log.Info($"TaxResidentialRatePatch: sending SetResidentialTaxRate(level={jobLevel}, {rate}).");
             Command.SendToAll(new TaxRateSyncCommand { SetterMethod = 1, Param1 = jobLevel, Rate = rate });
         }
     }
@@ -43,6 +45,7 @@ namespace CS2M.BaseGame
         {
             if (ReplayScope.IsReplayActive) return;
             if (NetworkInterface.Instance?.LocalPlayer?.PlayerStatus != CS2M.API.Networking.PlayerStatus.PLAYING) return;
+            Log.Info($"TaxCommercialRatePatch: sending SetCommercialTaxRate({resource}, {rate}).");
             Command.SendToAll(new TaxRateSyncCommand { SetterMethod = 2, Param1 = (int)resource, Rate = rate });
         }
     }
@@ -55,6 +58,7 @@ namespace CS2M.BaseGame
         {
             if (ReplayScope.IsReplayActive) return;
             if (NetworkInterface.Instance?.LocalPlayer?.PlayerStatus != CS2M.API.Networking.PlayerStatus.PLAYING) return;
+            Log.Info($"TaxIndustrialRatePatch: sending SetIndustrialTaxRate({resource}, {rate}).");
             Command.SendToAll(new TaxRateSyncCommand { SetterMethod = 3, Param1 = (int)resource, Rate = rate });
         }
     }
@@ -67,6 +71,7 @@ namespace CS2M.BaseGame
         {
             if (ReplayScope.IsReplayActive) return;
             if (NetworkInterface.Instance?.LocalPlayer?.PlayerStatus != CS2M.API.Networking.PlayerStatus.PLAYING) return;
+            Log.Info($"TaxOfficeRatePatch: sending SetOfficeTaxRate({resource}, {rate}).");
             Command.SendToAll(new TaxRateSyncCommand { SetterMethod = 4, Param1 = (int)resource, Rate = rate });
         }
     }
