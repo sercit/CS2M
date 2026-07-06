@@ -104,15 +104,19 @@ namespace CS2M.BaseGame.Systems
 
         private void ApplyFrameSample(FrameSample sample)
         {
+            // Track server frame for informational purposes only.
+            // Do NOT call SetEffectiveFrame — forcibly jumping SimulationSystem.frameIndex
+            // via reflection causes internal game systems (e.g. ElectricityFlowSystem) to
+            // hit assertion failures because they have no way to handle a frame counter jump.
+            // The client runs its own simulation from frame 0; actions are replicated via commands.
             _interpolationCurrent = sample.Frame;
-            SetEffectiveFrame(sample.Frame);
 
             long currentTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
             double latencyMs = (currentTimestamp - sample.Timestamp) /
                                (double)System.Diagnostics.Stopwatch.Frequency * 1000.0;
             _avgLatency = Mathf.Lerp(_avgLatency, (float)latencyMs, 0.1f);
 
-            Log.Trace($"Frame updated to {sample.Frame}, latency: {latencyMs:F1}ms");
+            Log.Trace($"Server frame={sample.Frame}, latency={latencyMs:F1}ms (not applying to client simulation)");
         }
 
         private void SmoothInterpolation()
