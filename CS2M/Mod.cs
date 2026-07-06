@@ -90,6 +90,19 @@ namespace CS2M
             harmony.CreateClassProcessor(typeof(CS2M.BaseGame.ZoneToolReplayPatch)).Patch();
             harmony.CreateClassProcessor(typeof(CS2M.BaseGame.AreaToolReplayPatch)).Patch();
 
+            // Modular service upgrades (garage, truck bay, etc.)
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.ModularUpgradePatch)).Patch();
+
+            // Tax sync — one patch per TaxSystem setter
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.TaxAreaRatePatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.TaxResidentialRatePatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.TaxCommercialRatePatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.TaxIndustrialRatePatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.TaxOfficeRatePatch)).Patch();
+
+            // Service budget sync
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.ServiceBudgetSyncPatch)).Patch();
+
             // Register the UI system so the CS2M button appears on the main menu and
             // the multiplayer screens (join / host / hub) can be opened.
             updateSystem.UpdateAt<UISystem>(SystemUpdatePhase.UIUpdate);
