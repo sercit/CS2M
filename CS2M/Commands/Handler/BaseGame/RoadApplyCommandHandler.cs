@@ -92,13 +92,16 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
+            Log.Info($"RoadApplyCommandHandler: received road from server, nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
+
             if (!MarkNonce(command.ApplyNonce, ProcessedReplicationNonces, ProcessedReplicationNonceOrder, ReplicationNonceLock))
             {
-                Log.Debug($"RoadApplyCommandHandler: duplicate replicated nonce {command.ApplyNonce} ignored.");
+                Log.Info($"RoadApplyCommandHandler: duplicate replicated nonce {command.ApplyNonce} ignored.");
                 return;
             }
 
             bool applied = RoadSyncService.TryReplayApply(command);
+            Log.Info($"RoadApplyCommandHandler: TryReplayApply nonce={command.ApplyNonce} result={applied}.");
             if (!applied)
             {
                 Log.Warn($"RoadApplyCommandHandler: failed to apply road replication nonce {command.ApplyNonce}.");

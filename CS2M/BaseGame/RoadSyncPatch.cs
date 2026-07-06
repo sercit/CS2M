@@ -25,15 +25,15 @@ namespace CS2M.BaseGame
                 return true;
             }
 
-            if (!RoadSyncService.IsSupportedOperation(__instance, out string reason))
-            {
-                Log.Warn($"RoadSyncPatch: unsupported net action blocked ({reason}).");
-                __result = inputDeps;
-                return false;
-            }
-
             if (Command.CurrentRole == MultiplayerRole.Client)
             {
+                if (!RoadSyncService.IsSupportedOperation(__instance, out string reason))
+                {
+                    Log.Warn($"RoadSyncPatch: unsupported net action on client ({reason}), blocking.");
+                    __result = inputDeps;
+                    return false;
+                }
+
                 bool built = RoadSyncService.TryBuildApplyCommand(
                     __instance,
                     singleFrameOnly,
@@ -54,17 +54,12 @@ namespace CS2M.BaseGame
 
             if (Command.CurrentRole == MultiplayerRole.Server)
             {
-                bool built = RoadSyncService.TryBuildApplyCommand(
+                // Always let Apply run on server — replication is best-effort
+                RoadSyncService.TryBuildApplyCommand(
                     __instance,
                     singleFrameOnly,
                     requestOnly: false,
                     out __state);
-                if (!built)
-                {
-                    Log.Warn("RoadSyncPatch: failed to build local road replication command.");
-                    __result = inputDeps;
-                    return false;
-                }
             }
 
             return true;
@@ -78,7 +73,7 @@ namespace CS2M.BaseGame
             }
 
             Command.SendToClients?.Invoke(__state);
-            Log.Debug($"RoadSyncPatch: replicated road nonce {__state.ApplyNonce}.");
+            Log.Info($"RoadSyncPatch: sent road to clients, nonce={__state.ApplyNonce}, prefab={__state.PrefabName}.");
         }
 
         private static bool ShouldHandle(NetToolSystem toolSystem)
@@ -88,8 +83,10 @@ namespace CS2M.BaseGame
                 return false;
             }
 
-            if (NetworkInterface.Instance?.LocalPlayer?.PlayerStatus != CS2M.API.Networking.PlayerStatus.PLAYING)
+            var status = NetworkInterface.Instance?.LocalPlayer?.PlayerStatus;
+            if (status != CS2M.API.Networking.PlayerStatus.PLAYING)
             {
+                Log.Info($"RoadSyncPatch.ShouldHandle: blocked, PlayerStatus={status}, role={Command.CurrentRole}");
                 return false;
             }
 
