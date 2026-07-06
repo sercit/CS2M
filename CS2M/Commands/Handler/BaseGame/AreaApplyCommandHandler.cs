@@ -52,6 +52,12 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
+            Log.Info($"AreaApplyCommandHandler: queued client area request nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
+            AreaSyncService.PendingServerRequests.Enqueue(command);
+        }
+
+        internal static void ApplyPendingServerRequest(AreaApplyCommand command)
+        {
             bool applied = AreaSyncService.TryReplayApply(command);
             if (!applied)
             {
@@ -59,23 +65,19 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
+            Log.Info($"AreaApplyCommandHandler: applied client area request nonce={command.ApplyNonce}, relaying to all clients.");
             var replication = (AreaApplyCommand)command.Clone();
-            replication.RequestOnly = false;
+replication.RequestOnly = false;
             Command.SendToClients?.Invoke(replication);
 
-            // Log activity to the cooperative ledger
             Unity.Mathematics.float3 pos = Unity.Mathematics.float3.zero;
             if (command.ControlPoints != null && command.ControlPoints.Length > 0 && command.ControlPoints[0] != null)
-            {
                 pos = new Unity.Mathematics.float3(command.ControlPoints[0].PositionX, command.ControlPoints[0].PositionY, command.ControlPoints[0].PositionZ);
-            }
 
             string areaName = string.IsNullOrEmpty(command.PrefabName) ? "Area boundaries" : command.PrefabName;
             CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
                 CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
-                $"Modified area: {areaName}",
-                pos
-            );
+                $"Modified area: {areaName}", pos);
         }
 
         private static void HandleOnClient(AreaApplyCommand command)

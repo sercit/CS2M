@@ -52,6 +52,12 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
+            Log.Info($"ZoneApplyCommandHandler: queued client zone request nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
+            ZoneSyncService.PendingServerRequests.Enqueue(command);
+        }
+
+        internal static void ApplyPendingServerRequest(ZoneApplyCommand command)
+        {
             bool applied = ZoneSyncService.TryReplayApply(command);
             if (!applied)
             {
@@ -59,31 +65,23 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
+            Log.Info($"ZoneApplyCommandHandler: applied client zone request nonce={command.ApplyNonce}, relaying to all clients.");
             var replication = (ZoneApplyCommand)command.Clone();
             replication.RequestOnly = false;
             Command.SendToClients?.Invoke(replication);
 
-            // Log activity to the cooperative ledger
             Unity.Mathematics.float3 pos = Unity.Mathematics.float3.zero;
             if (command.RaycastPoint != null)
-            {
                 pos = new Unity.Mathematics.float3(command.RaycastPoint.PositionX, command.RaycastPoint.PositionY, command.RaycastPoint.PositionZ);
-            }
             else if (command.StartPoint != null)
-            {
                 pos = new Unity.Mathematics.float3(command.StartPoint.PositionX, command.StartPoint.PositionY, command.StartPoint.PositionZ);
-            }
             else if (command.SnapPoint != null)
-            {
                 pos = new Unity.Mathematics.float3(command.SnapPoint.PositionX, command.SnapPoint.PositionY, command.SnapPoint.PositionZ);
-            }
 
             string zoneName = string.IsNullOrEmpty(command.PrefabName) ? "Zone grid" : command.PrefabName;
             CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
                 CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
-                $"Applied zoning: {zoneName}",
-                pos
-            );
+                $"Applied zoning: {zoneName}", pos);
         }
 
         private static void HandleOnClient(ZoneApplyCommand command)

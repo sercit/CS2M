@@ -18,8 +18,10 @@ namespace CS2M.BaseGame
         private static readonly Dictionary<string, AreaPrefab> PrefabCache = new(StringComparer.Ordinal);
         private static int _applyNonceCounter;
 
-        /// <summary>Commands queued by the network handler to be replayed during the next ECS OnUpdate of AreaToolSystem.</summary>
+        /// <summary>Server-replicated commands to be applied on the client during AreaToolSystem.OnUpdate.</summary>
         internal static readonly ConcurrentQueue<AreaApplyCommand> PendingReplays = new();
+        /// <summary>Client requests to be applied on the server during AreaToolSystem.OnUpdate.</summary>
+        internal static readonly ConcurrentQueue<AreaApplyCommand> PendingServerRequests = new();
 
         public static bool IsSupportedOperation(AreaToolSystem tool, out string reason)
         {

@@ -18,8 +18,11 @@ namespace CS2M.BaseGame
         private static readonly Dictionary<string, NetPrefab> PrefabCache = new(StringComparer.Ordinal);
         private static int _applyNonceCounter;
 
-        /// <summary>Commands queued by the network handler to be replayed during the next ECS OnUpdate.</summary>
+        /// <summary>Client-replicas queued by the network handler to be replayed on the client during the next ECS OnUpdate.</summary>
         internal static readonly ConcurrentQueue<RoadApplyCommand> PendingReplays = new();
+
+        /// <summary>Client requests queued on the server to be applied during the next ECS OnUpdate.</summary>
+        internal static readonly ConcurrentQueue<RoadApplyCommand> PendingServerRequests = new();
 
         public static bool IsSupportedOperation(NetToolSystem tool, out string reason)
         {

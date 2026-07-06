@@ -52,6 +52,14 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
+            // Queue for processing inside NetToolSystem.OnUpdate — that is the only ECS context
+            // where SafeCommandBufferSystem.CreateCommandBuffer() is available on the server too.
+            Log.Info($"RoadApplyCommandHandler: queued client road request nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
+            RoadSyncService.PendingServerRequests.Enqueue(command);
+        }
+
+        internal static void ApplyPendingServerRequest(RoadApplyCommand command)
+        {
             bool applied = RoadSyncService.TryReplayApply(command);
             if (!applied)
             {
@@ -59,6 +67,7 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
+            Log.Info($"RoadApplyCommandHandler: applied client road request nonce={command.ApplyNonce}, relaying to all clients.");
             var replication = (RoadApplyCommand)command.Clone();
             replication.RequestOnly = false;
             Command.SendToClients?.Invoke(replication);

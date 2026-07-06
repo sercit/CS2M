@@ -18,8 +18,10 @@ namespace CS2M.BaseGame
         private static readonly Dictionary<string, ZonePrefab> PrefabCache = new(StringComparer.Ordinal);
         private static int _applyNonceCounter;
 
-        /// <summary>Commands queued by the network handler to be replayed during the next ECS OnUpdate of ZoneToolSystem.</summary>
+        /// <summary>Server-replicated commands to be applied on the client during ZoneToolSystem.OnUpdate.</summary>
         internal static readonly ConcurrentQueue<ZoneApplyCommand> PendingReplays = new();
+        /// <summary>Client requests to be applied on the server during ZoneToolSystem.OnUpdate.</summary>
+        internal static readonly ConcurrentQueue<ZoneApplyCommand> PendingServerRequests = new();
 
         public static bool IsSupportedOperation(ZoneToolSystem tool, out string reason)
         {
