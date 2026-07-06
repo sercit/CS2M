@@ -91,20 +91,10 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
-            CS2M.BaseGame.GameThreadDispatcher.Enqueue(() =>
-            {
-                bool applied = AreaSyncService.TryReplayApply(command);
-                if (!applied) { Log.Warn($"AreaApplyCommandHandler: failed to apply area nonce {command.ApplyNonce}."); return; }
-
-                Unity.Mathematics.float3 pos = Unity.Mathematics.float3.zero;
-                if (command.ControlPoints != null && command.ControlPoints.Length > 0 && command.ControlPoints[0] != null)
-                    pos = new Unity.Mathematics.float3(command.ControlPoints[0].PositionX, command.ControlPoints[0].PositionY, command.ControlPoints[0].PositionZ);
-
-                string areaName = string.IsNullOrEmpty(command.PrefabName) ? "Area boundaries" : command.PrefabName;
-                CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
-                    CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
-                    $"Modified area: {areaName}", pos);
-            });
+            // Defer to AreaToolSystem.OnUpdate via ToolReplayPatch — that is the only ECS
+            // context where SafeCommandBufferSystem.CreateCommandBuffer() is allowed.
+            AreaSyncService.PendingReplays.Enqueue(command);
+            Log.Info($"AreaApplyCommandHandler: queued area for replay, nonce={command.ApplyNonce}");
         }
 
         private static bool MarkNonce(int nonce, HashSet<int> set, Queue<int> order, object sync)

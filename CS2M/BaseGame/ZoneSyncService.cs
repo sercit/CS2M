@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,6 +17,9 @@ namespace CS2M.BaseGame
     {
         private static readonly Dictionary<string, ZonePrefab> PrefabCache = new(StringComparer.Ordinal);
         private static int _applyNonceCounter;
+
+        /// <summary>Commands queued by the network handler to be replayed during the next ECS OnUpdate of ZoneToolSystem.</summary>
+        internal static readonly ConcurrentQueue<ZoneApplyCommand> PendingReplays = new();
 
         public static bool IsSupportedOperation(ZoneToolSystem tool, out string reason)
         {

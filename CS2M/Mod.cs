@@ -84,6 +84,12 @@ namespace CS2M
             harmony.CreateClassProcessor(typeof(CS2M.BaseGame.ZoneSyncPatch)).Patch();
             harmony.CreateClassProcessor(typeof(CS2M.BaseGame.AreaSyncPatch)).Patch();
 
+            // Client-side replay patches: drain pending commands inside each tool
+            // system's own OnUpdate so that SafeCommandBufferSystem is available.
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.NetToolReplayPatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.ZoneToolReplayPatch)).Patch();
+            harmony.CreateClassProcessor(typeof(CS2M.BaseGame.AreaToolReplayPatch)).Patch();
+
             // Register the UI system so the CS2M button appears on the main menu and
             // the multiplayer screens (join / host / hub) can be opened.
             updateSystem.UpdateAt<UISystem>(SystemUpdatePhase.UIUpdate);

@@ -100,23 +100,12 @@ namespace CS2M.Commands.Handler.BaseGame
                 return;
             }
 
-            CS2M.BaseGame.GameThreadDispatcher.Enqueue(() =>
-            {
-                bool applied = RoadSyncService.TryReplayApply(command);
-                if (!applied) { Log.Warn($"RoadApplyCommandHandler: failed to apply road nonce {command.ApplyNonce}."); return; }
+            // Defer to NetToolSystem.OnUpdate via ToolReplayPatch — that is the only ECS
+            // context where SafeCommandBufferSystem.CreateCommandBuffer() is allowed.
+            RoadSyncService.PendingReplays.Enqueue(command);
+            Log.Info($"RoadApplyCommandHandler: queued road for replay, nonce={command.ApplyNonce}, prefab={command.PrefabName}");
 
-                Unity.Mathematics.float3 pos = Unity.Mathematics.float3.zero;
-                if (command.LastRaycastPoint != null)
-                    pos = new Unity.Mathematics.float3(command.LastRaycastPoint.PositionX, command.LastRaycastPoint.PositionY, command.LastRaycastPoint.PositionZ);
-                else if (command.ApplyStartPoint != null)
-                    pos = new Unity.Mathematics.float3(command.ApplyStartPoint.PositionX, command.ApplyStartPoint.PositionY, command.ApplyStartPoint.PositionZ);
-                else if (command.ControlPoints != null && command.ControlPoints.Length > 0 && command.ControlPoints[0] != null)
-                    pos = new Unity.Mathematics.float3(command.ControlPoints[0].PositionX, command.ControlPoints[0].PositionY, command.ControlPoints[0].PositionZ);
-
-                CS2M.Systems.CooperativeSyncSystem.RegisterActivity(
-                    CS2M.Systems.CooperativeSyncSystem.ResolveUsername(command.SenderId),
-                    $"Built road: {command.PrefabName}", pos);
-            });
+            // Activity log is registered after successful replay in NetToolReplayPatch.
         }
 
         private static bool MarkNonce(int nonce, HashSet<int> set, Queue<int> order, object sync)
