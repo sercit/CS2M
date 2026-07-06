@@ -1,5 +1,6 @@
 using CS2M.API.Commands;
 using CS2M.BaseGame.Commands;
+using CS2M.Commands.Handler.BaseGame;
 using CS2M.Networking;
 using Game.Tools;
 using HarmonyLib;
@@ -19,45 +20,17 @@ namespace CS2M.BaseGame
             out ZoneApplyCommand __state)
         {
             __state = null;
+
             if (ReplayScope.IsReplayActive || !ShouldHandle(__instance))
             {
                 return true;
             }
 
-            if (!ZoneSyncService.IsSupportedOperation(__instance, out string reason))
-            {
-                Log.Warn($"ZoneSyncPatch: unsupported zone action blocked ({reason}).");
-                __result = inputDeps;
-                return false;
-            }
+            ZoneSyncService.TryBuildApplyCommand(__instance, singleFrameOnly, requestOnly: false, out __state);
 
-            if (Command.CurrentRole == MultiplayerRole.Client)
+            if (Command.CurrentRole == MultiplayerRole.Client && __state != null)
             {
-                bool built = ZoneSyncService.TryBuildApplyCommand(
-                    __instance,
-                    singleFrameOnly,
-                    requestOnly: true,
-                    out ZoneApplyCommand request);
-                if (!built)
-                {
-                    Log.Warn("ZoneSyncPatch: failed to build zoning request command.");
-                    __result = inputDeps;
-                    return false;
-                }
-
-                Command.SendToServer?.Invoke(request);
-                Log.Debug($"ZoneSyncPatch: sent zoning request nonce {request.ApplyNonce}.");
-                __result = inputDeps;
-                return false;
-            }
-
-            if (Command.CurrentRole == MultiplayerRole.Server)
-            {
-                ZoneSyncService.TryBuildApplyCommand(
-                    __instance,
-                    singleFrameOnly,
-                    requestOnly: false,
-                    out __state);
+                ZoneApplyCommandHandler.PreMarkSentNonce(__state.ApplyNonce);
             }
 
             return true;
@@ -65,13 +38,21 @@ namespace CS2M.BaseGame
 
         public static void Postfix(ZoneApplyCommand __state)
         {
-            if (ReplayScope.IsReplayActive || Command.CurrentRole != MultiplayerRole.Server || __state == null)
+            if (ReplayScope.IsReplayActive || __state == null)
             {
                 return;
             }
 
-            Command.SendToClients?.Invoke(__state);
-            Log.Debug($"ZoneSyncPatch: replicated zoning nonce {__state.ApplyNonce}.");
+            if (Command.CurrentRole == MultiplayerRole.Client)
+            {
+                Command.SendToServer?.Invoke(__state);
+                Log.Info($"ZoneSyncPatch: sent built zone to server, nonce={__state.ApplyNonce}, prefab={__state.PrefabName}.");
+            }
+            else if (Command.CurrentRole == MultiplayerRole.Server)
+            {
+                Command.SendToClients?.Invoke(__state);
+                Log.Info($"ZoneSyncPatch: sent zone to clients, nonce={__state.ApplyNonce}.");
+            }
         }
 
         private static bool ShouldHandle(ZoneToolSystem toolSystem)
@@ -81,7 +62,7 @@ namespace CS2M.BaseGame
                 return false;
             }
 
-            if (NetworkInterface.Instance.LocalPlayer.PlayerStatus != CS2M.API.Networking.PlayerStatus.PLAYING)
+            if (NetworkInterface.Instance?.LocalPlayer?.PlayerStatus != CS2M.API.Networking.PlayerStatus.PLAYING)
             {
                 return false;
             }

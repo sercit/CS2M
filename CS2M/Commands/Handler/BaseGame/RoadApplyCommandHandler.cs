@@ -41,21 +41,30 @@ namespace CS2M.Commands.Handler.BaseGame
 
         private static void HandleOnServer(RoadApplyCommand command)
         {
-            if (!command.RequestOnly)
-            {
-                return;
-            }
-
+            // Client already built locally and sent us the action — apply on server
+            // and relay to all other clients (sender will ignore the echo via pre-marked nonce).
             if (!MarkNonce(command.ApplyNonce, ProcessedRequestNonces, ProcessedRequestNonceOrder, RequestNonceLock))
             {
-                Log.Debug($"RoadApplyCommandHandler: duplicate request nonce {command.ApplyNonce} ignored.");
+                Log.Debug($"RoadApplyCommandHandler: duplicate server nonce {command.ApplyNonce} ignored.");
                 return;
             }
 
-            // Queue for processing inside NetToolSystem.OnUpdate — that is the only ECS context
-            // where SafeCommandBufferSystem.CreateCommandBuffer() is available on the server too.
-            Log.Info($"RoadApplyCommandHandler: queued client road request nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
+            Log.Info($"RoadApplyCommandHandler: queued client road nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
             RoadSyncService.PendingServerRequests.Enqueue(command);
+        }
+
+        /// <summary>Pre-marks a nonce in the replication set so the server echo is ignored.</summary>
+        internal static void PreMarkSentNonce(int nonce)
+        {
+            lock (ReplicationNonceLock)
+            {
+                if (ProcessedReplicationNonces.Add(nonce))
+                {
+                    ProcessedReplicationNonceOrder.Enqueue(nonce);
+                    while (ProcessedReplicationNonceOrder.Count > NonceHistoryLimit)
+                        ProcessedReplicationNonces.Remove(ProcessedReplicationNonceOrder.Dequeue());
+                }
+            }
         }
 
         internal static void ApplyPendingServerRequest(RoadApplyCommand command)

@@ -41,19 +41,27 @@ namespace CS2M.Commands.Handler.BaseGame
 
         private static void HandleOnServer(ZoneApplyCommand command)
         {
-            if (!command.RequestOnly)
-            {
-                return;
-            }
-
             if (!MarkNonce(command.ApplyNonce, ProcessedRequestNonces, ProcessedRequestNonceOrder, RequestNonceLock))
             {
-                Log.Debug($"ZoneApplyCommandHandler: duplicate request nonce {command.ApplyNonce} ignored.");
+                Log.Debug($"ZoneApplyCommandHandler: duplicate server nonce {command.ApplyNonce} ignored.");
                 return;
             }
 
-            Log.Info($"ZoneApplyCommandHandler: queued client zone request nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
+            Log.Info($"ZoneApplyCommandHandler: queued client zone nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
             ZoneSyncService.PendingServerRequests.Enqueue(command);
+        }
+
+        internal static void PreMarkSentNonce(int nonce)
+        {
+            lock (ReplicationNonceLock)
+            {
+                if (ProcessedReplicationNonces.Add(nonce))
+                {
+                    ProcessedReplicationNonceOrder.Enqueue(nonce);
+                    while (ProcessedReplicationNonceOrder.Count > NonceHistoryLimit)
+                        ProcessedReplicationNonces.Remove(ProcessedReplicationNonceOrder.Dequeue());
+                }
+            }
         }
 
         internal static void ApplyPendingServerRequest(ZoneApplyCommand command)

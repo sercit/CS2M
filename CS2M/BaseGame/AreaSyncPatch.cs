@@ -1,5 +1,6 @@
 using CS2M.API.Commands;
 using CS2M.BaseGame.Commands;
+using CS2M.Commands.Handler.BaseGame;
 using CS2M.Networking;
 using Game.Tools;
 using HarmonyLib;
@@ -25,39 +26,11 @@ namespace CS2M.BaseGame
                 return true;
             }
 
-            if (Command.CurrentRole == MultiplayerRole.Client)
-            {
-                bool built = AreaSyncService.TryBuildApplyCommand(
-                    __instance,
-                    singleFrameOnly,
-                    requestOnly: true,
-                    out AreaApplyCommand request);
-                if (!built)
-                {
-                    Log.Warn("AreaSyncPatch: failed to build area request command.");
-                    __result = inputDeps;
-                    return false;
-                }
+            AreaSyncService.TryBuildApplyCommand(__instance, singleFrameOnly, requestOnly: false, out __state);
 
-                Command.SendToServer?.Invoke(request);
-                Log.Debug($"AreaSyncPatch: sent area request nonce {request.ApplyNonce}.");
-                __result = inputDeps;
-                return false;
-            }
-
-            if (Command.CurrentRole == MultiplayerRole.Server)
+            if (Command.CurrentRole == MultiplayerRole.Client && __state != null)
             {
-                bool built = AreaSyncService.TryBuildApplyCommand(
-                    __instance,
-                    singleFrameOnly,
-                    requestOnly: false,
-                    out __state);
-                if (!built)
-                {
-                    Log.Warn("AreaSyncPatch: failed to build local area replication command.");
-                    __result = inputDeps;
-                    return false;
-                }
+                AreaApplyCommandHandler.PreMarkSentNonce(__state.ApplyNonce);
             }
 
             return true;
@@ -65,13 +38,21 @@ namespace CS2M.BaseGame
 
         public static void Postfix(AreaApplyCommand __state)
         {
-            if (ReplayScope.IsReplayActive || Command.CurrentRole != MultiplayerRole.Server || __state == null)
+            if (ReplayScope.IsReplayActive || __state == null)
             {
                 return;
             }
 
-            Command.SendToClients?.Invoke(__state);
-            Log.Debug($"AreaSyncPatch: replicated area nonce {__state.ApplyNonce}.");
+            if (Command.CurrentRole == MultiplayerRole.Client)
+            {
+                Command.SendToServer?.Invoke(__state);
+                Log.Info($"AreaSyncPatch: sent built area to server, nonce={__state.ApplyNonce}, prefab={__state.PrefabName}.");
+            }
+            else if (Command.CurrentRole == MultiplayerRole.Server)
+            {
+                Command.SendToClients?.Invoke(__state);
+                Log.Info($"AreaSyncPatch: sent area to clients, nonce={__state.ApplyNonce}.");
+            }
         }
 
         private static bool ShouldHandle(AreaToolSystem toolSystem)

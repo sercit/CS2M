@@ -1,5 +1,6 @@
 using CS2M.API.Commands;
 using CS2M.BaseGame.Commands;
+using CS2M.Commands.Handler.BaseGame;
 using CS2M.Networking;
 using Game.Tools;
 using HarmonyLib;
@@ -25,55 +26,36 @@ namespace CS2M.BaseGame
                 return true;
             }
 
-            if (Command.CurrentRole == MultiplayerRole.Client)
+            // Capture tool state before Apply modifies it (used by both Client and Server postfix).
+            RoadSyncService.TryBuildApplyCommand(__instance, singleFrameOnly, requestOnly: false, out __state);
+
+            if (Command.CurrentRole == MultiplayerRole.Client && __state != null)
             {
-                if (!RoadSyncService.IsSupportedOperation(__instance, out string reason))
-                {
-                    Log.Warn($"RoadSyncPatch: unsupported net action on client ({reason}), blocking.");
-                    __result = inputDeps;
-                    return false;
-                }
-
-                bool built = RoadSyncService.TryBuildApplyCommand(
-                    __instance,
-                    singleFrameOnly,
-                    requestOnly: true,
-                    out RoadApplyCommand request);
-                if (!built)
-                {
-                    Log.Warn("RoadSyncPatch: failed to build road request command.");
-                    __result = inputDeps;
-                    return false;
-                }
-
-                Command.SendToServer?.Invoke(request);
-                Log.Debug($"RoadSyncPatch: sent road request nonce {request.ApplyNonce}.");
-                __result = inputDeps;
-                return false;
+                // Pre-mark nonce so when the server echoes this back we skip it.
+                RoadApplyCommandHandler.PreMarkSentNonce(__state.ApplyNonce);
             }
 
-            if (Command.CurrentRole == MultiplayerRole.Server)
-            {
-                // Always let Apply run on server — replication is best-effort
-                RoadSyncService.TryBuildApplyCommand(
-                    __instance,
-                    singleFrameOnly,
-                    requestOnly: false,
-                    out __state);
-            }
-
+            // Always let Apply run locally — client gets immediate feedback, server is authoritative.
             return true;
         }
 
         public static void Postfix(RoadApplyCommand __state)
         {
-            if (ReplayScope.IsReplayActive || Command.CurrentRole != MultiplayerRole.Server || __state == null)
+            if (ReplayScope.IsReplayActive || __state == null)
             {
                 return;
             }
 
-            Command.SendToClients?.Invoke(__state);
-            Log.Info($"RoadSyncPatch: sent road to clients, nonce={__state.ApplyNonce}, prefab={__state.PrefabName}.");
+            if (Command.CurrentRole == MultiplayerRole.Client)
+            {
+                Command.SendToServer?.Invoke(__state);
+                Log.Info($"RoadSyncPatch: sent built road to server, nonce={__state.ApplyNonce}, prefab={__state.PrefabName}.");
+            }
+            else if (Command.CurrentRole == MultiplayerRole.Server)
+            {
+                Command.SendToClients?.Invoke(__state);
+                Log.Info($"RoadSyncPatch: sent road to clients, nonce={__state.ApplyNonce}, prefab={__state.PrefabName}.");
+            }
         }
 
         private static bool ShouldHandle(NetToolSystem toolSystem)
@@ -86,7 +68,6 @@ namespace CS2M.BaseGame
             var status = NetworkInterface.Instance?.LocalPlayer?.PlayerStatus;
             if (status != CS2M.API.Networking.PlayerStatus.PLAYING)
             {
-                Log.Info($"RoadSyncPatch.ShouldHandle: blocked, PlayerStatus={status}, role={Command.CurrentRole}");
                 return false;
             }
 

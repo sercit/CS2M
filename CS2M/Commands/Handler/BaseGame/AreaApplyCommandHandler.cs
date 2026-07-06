@@ -41,19 +41,27 @@ namespace CS2M.Commands.Handler.BaseGame
 
         private static void HandleOnServer(AreaApplyCommand command)
         {
-            if (!command.RequestOnly)
-            {
-                return;
-            }
-
             if (!MarkNonce(command.ApplyNonce, ProcessedRequestNonces, ProcessedRequestNonceOrder, RequestNonceLock))
             {
-                Log.Debug($"AreaApplyCommandHandler: duplicate request nonce {command.ApplyNonce} ignored.");
+                Log.Debug($"AreaApplyCommandHandler: duplicate server nonce {command.ApplyNonce} ignored.");
                 return;
             }
 
-            Log.Info($"AreaApplyCommandHandler: queued client area request nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
+            Log.Info($"AreaApplyCommandHandler: queued client area nonce={command.ApplyNonce}, prefab={command.PrefabName}.");
             AreaSyncService.PendingServerRequests.Enqueue(command);
+        }
+
+        internal static void PreMarkSentNonce(int nonce)
+        {
+            lock (ReplicationNonceLock)
+            {
+                if (ProcessedReplicationNonces.Add(nonce))
+                {
+                    ProcessedReplicationNonceOrder.Enqueue(nonce);
+                    while (ProcessedReplicationNonceOrder.Count > NonceHistoryLimit)
+                        ProcessedReplicationNonces.Remove(ProcessedReplicationNonceOrder.Dequeue());
+                }
+            }
         }
 
         internal static void ApplyPendingServerRequest(AreaApplyCommand command)
